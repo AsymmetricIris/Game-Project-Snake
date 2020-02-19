@@ -30,7 +30,7 @@
 extern "C" {
 #endif
 
-#define KEY_BACK   8
+#define KEY_BACK   0
 #define KEY_TAB    9
 #define KEY_UP     72
 #define KEY_DOWN   80
