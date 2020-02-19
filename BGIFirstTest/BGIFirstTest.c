@@ -7,6 +7,9 @@
 #include <stdlib.h>
 #include <conio.h>   
 #include <stdbool.h>
+#include <string.h>
+#include <errno.h>
+
 
 #define getLength(x) (sizeof(x) / sizeof(x[0]))
 
@@ -23,18 +26,22 @@ void main(void)
 	int arenaX2 = 500;
 	int arenaY2 = 500;
 	int tailCurrentLen = 0;
+	char pathMap[550][550][2];
 
 	struct SnakeSegment
 	{
-		int x, y;
+		int x, y, xVelocity, yVelocity;
 		bool exists;
 	};
 
 	struct SnakeSegment segmentArr[10];
 
+	int snakeSpeed = 5;
 	segmentArr[0].x = 100;
 	segmentArr[0].y = 100;
 	segmentArr[0].exists = true;
+	segmentArr[0].xVelocity = snakeSpeed;
+	segmentArr[0].yVelocity = 0;
 
 
 	int xo = 200;
@@ -44,12 +51,34 @@ void main(void)
 
 	int c = 0; // for input from keyboard
 
+	FILE *scoreInput, *scoreOutput;
+	int score = 0;
+	errno_t err;
+	printf("Before the IO bits\n");
+	if ( (err = fopen_s(&scoreInput, "scores.dat", "r")) != 0 )
+	{
+		fprintf(stderr, "ERROR: can't open file\n");
+		return;
+	}
+	
+	printf("After read 1\n");
+	if ( (fscanf_s(scoreInput, "%d\n", &score)) )
+		printf("Score: %d\n", score);
+	printf("After writing\n");
+	fclose(scoreInput);
+
+	if ( (err = fopen_s(&scoreOutput, "scores.dat", "a")) != 0 )
+	{
+		fprintf(stderr, "ERROR: can't open file\n");
+		return;
+	}
+	printf("After read 2\n");
+
 	int i = 0;
 	int distance;
-	int score = 0;
-	int snakeSpeed = 5;
-	int snakeXVelocity = snakeSpeed;
-	int snakeYVelocity = 0;
+	
+	/*int snakeXVelocity = snakeSpeed;
+	int snakeYVelocity = 0;*/
 
 	do {
 		setactivepage(i % 2);
@@ -61,12 +90,9 @@ void main(void)
 
 		drawObstacle(xo, yo);
 		// draw circle in current position
-		for (int i = 0; i < getLength(segmentArr); i++)
+		for (int i = 0; i <= tailCurrentLen; i++)
 		{
-			if (segmentArr[i].exists)
-			{
-				drawAvatar(segmentArr[i].x, segmentArr[i].y);
-			}
+			drawAvatar(segmentArr[i].x, segmentArr[i].y);
 		}
 		
 
@@ -75,10 +101,17 @@ void main(void)
 		setvisualpage(i % 2);
 		i++;
 
-		segmentArr[0].x += snakeXVelocity;   // try different values for the offset, e.g. x+=5 or x+=10
-		segmentArr[0].y += snakeYVelocity;
+		for (int i = 0; i < getLength(segmentArr); i++)
+		{
+			if (segmentArr[i].exists)
+			{
+				segmentArr[i].x += segmentArr[i].xVelocity;   // try different values for the offset, e.g. x+=5 or x+=10
+				segmentArr[i].y += segmentArr[i].yVelocity;
+			}
+		}
 
-
+		// Send the serpent to the opposite side of the arena if it touches a wall
+		// TODO - make more accurate
 		if (segmentArr[0].x > arenaX2)
 			segmentArr[0].x = arenaX1;
 		else if (segmentArr[0].x < arenaX1)
@@ -100,10 +133,33 @@ void main(void)
 			yo = arenaY1 + (rand() % (arenaY2 - 50));
 			score++;
 			tailCurrentLen++;
-			printf("Score: %d\nTail length: %d\n", score, tailCurrentLen);
 			segmentArr[tailCurrentLen].exists = true;
-			segmentArr[tailCurrentLen].x = segmentArr[0].x;
-			segmentArr[tailCurrentLen].y = segmentArr[0].y;
+			
+			switch (segmentArr[(tailCurrentLen - 1)].xVelocity)
+			{
+			case 5:
+				segmentArr[tailCurrentLen].x = segmentArr[tailCurrentLen - 1].x - 20;
+				break;
+			case -5:
+				segmentArr[tailCurrentLen].x = segmentArr[tailCurrentLen - 1].x + 20;
+				break;
+			default:
+				segmentArr[tailCurrentLen].x = segmentArr[tailCurrentLen - 1].x;
+			}
+
+			switch (segmentArr[(tailCurrentLen - 1)].yVelocity)
+			{
+			case 5:
+				segmentArr[tailCurrentLen].y = segmentArr[tailCurrentLen - 1].y - 20;
+				break;
+			case -5:
+				segmentArr[tailCurrentLen].y = segmentArr[tailCurrentLen - 1].y + 20;
+				break;
+			default:
+				segmentArr[tailCurrentLen].y = segmentArr[tailCurrentLen - 1].y;
+			}
+			printf("Score: %d\nTail length: %d\n", score, tailCurrentLen);
+
 		}
 
 		delay(100); // wait 50 ms , try different values for this delay
@@ -112,16 +168,16 @@ void main(void)
 			c = _getch();
 			switch (c) {
 			case 119: //key w
-				snakeYVelocity = -snakeSpeed;
+				segmentArr[0].yVelocity = -snakeSpeed;
 				break;
 			case 115: //key s
-				snakeYVelocity = snakeSpeed;
+				segmentArr[0].yVelocity = snakeSpeed;
 				break;
 			case 97: //key a
-				snakeXVelocity = -snakeSpeed;
+				segmentArr[0].xVelocity = -snakeSpeed;
 				break;
 			case 100: //key d
-				snakeXVelocity = snakeSpeed;
+				segmentArr[0].xVelocity = snakeSpeed;
 				break;
 			}
 			//printf("key pressed is %d", c);
@@ -129,7 +185,15 @@ void main(void)
 
 	} while (c != KEY_ESCAPE);
 
+	if (fprintf(scoreOutput, "%d\n", score) == 1)
+	{
+		printf("score %d written\n", score);
+	}
 
+	if (scoreOutput)
+	{
+		fclose(scoreOutput);
+	}
 }
 
 void drawAvatar(int x, int y)

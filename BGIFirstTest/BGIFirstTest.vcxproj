@@ -141,6 +141,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>C:\Users\David Ingleby\source\repos\Ingavid\Game-Project---Snake\BGIFirstTest\openbgi-sources-1.5\openbgi\library;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -161,7 +162,12 @@
     <ClCompile Include="openbgi-sources-1.5\openbgi\library\Server.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="openbgi-sources-1.5\openbgi\library\graphics.h" />
+    <ClInclude Include="openbgi-sources-1.5\openbgi\library\graphics.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="scores.dat" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
