@@ -85,14 +85,6 @@ void setArrVal(int* ptr_arr, int val, int row, int col, int array_rows, int arra
 int getArrVal(int* ptr_arr, int row, int col, int array_rows, int array_cols);
 bool askToPlayAgain();
 
-
-
-struct SnakeSegment
-{
-	int x, y, xVelocity, yVelocity, distanceToHead;
-	bool exists;
-};
-
 void main(void)
 {
 	// Initialise graphic window
@@ -111,8 +103,6 @@ void main(void)
 	//setArrVal(&pathMap, 4, 500, 500, 501, 501);
 	//printf("Value at 5, 5: %d\n", getArrVal(&pathMap, 5, 5, 501, 501) );
 	//printArray(&pathMap, ROWS, COLS);
-
-	struct SnakeSegment segmentArr[10];
 
 	Snake playerSnake;
 
@@ -144,23 +134,13 @@ void main(void)
 
 	do {
 		printf("Playing game\n");
-
-		int snakeSpeed = 5;
-		segmentArr[0].x = 100;
-		segmentArr[0].y = 100;
-		segmentArr[0].exists = true;
-		segmentArr[0].xVelocity = snakeSpeed;
-		segmentArr[0].yVelocity = 0;
-		int tailCurrentLen = 0;
+		playerSnake = createSnake(100, 100, 10);
 
 		int xo = 200;
 		int yo = 300;
 
 		int i = 0;
 		int distanceToGoodie;
-
-	/*int snakeXVelocity = snakeSpeed;
-	int snakeYVelocity = 0;*/
 
 		//save high score to data file
 		if ((err = fopen_s(&scoreOutput, "scores.dat", "a")) != 0)
@@ -179,98 +159,48 @@ void main(void)
 
 			drawObstacle(xo, yo);
 			// draw circle in current position
-			for (int i = 0; i <= tailCurrentLen; i++)
+			for (int i = 0; i <= playerSnake.size - 1; i++)
 			{
-				drawAvatar(segmentArr[i].x, segmentArr[i].y);
+				drawAvatar(playerSnake.segments[i].x, playerSnake.segments[i].y);
 			}
 
-			//drawAvatar(x2, 150);
 			// update position of circle of a fixed offset
 			setvisualpage(i % 2);
 			i++;
 
-			for (int i = 0; i < getLength(segmentArr); i++)
-			{
-				if (segmentArr[i].exists)
-				{
-					segmentArr[i].x += segmentArr[i].xVelocity;   // try different values for the offset, e.g. x+=5 or x+=10
-					segmentArr[i].y += segmentArr[i].yVelocity;
+			updateSnakePos(&playerSnake);
 
-					// debug
-					/*printf("Segment %d-X: %d\n", i, segmentArr[i].x);
-					printf("Segment %d-Y: %d\n", i, segmentArr[i].y);
-					printf("Segment %d-X velocity: %d\n", i, segmentArr[i].xVelocity);
-					printf("Segment %d-Y: velocity %d\n", i, segmentArr[i].yVelocity);*/
-				}
-			}
 
 			// Send the serpent to the opposite side of the arena if it touches a wall
 			// TODO - make more accurate
-			for (int segment = 0; segment <= tailCurrentLen; segment++)
+			for (int segment = 0; segment <= playerSnake.size; segment++)
 			{
-				if (segmentArr[segment].x > arenaX2)
-					segmentArr[segment].x = arenaX1;
-				else if (segmentArr[segment].x < arenaX1)
-					segmentArr[segment].x = arenaX2;
+				if (playerSnake.segments[segment].x > arenaX2)
+					playerSnake.segments[segment].x = arenaX1;
+				else if (playerSnake.segments[segment].x < arenaX1)
+					playerSnake.segments[segment].x = arenaX2;
 
-				if (segmentArr[segment].y > arenaY2)
-					segmentArr[segment].y = arenaY1;
-				else if (segmentArr[segment].y < arenaY1)
-					segmentArr[segment].y = arenaY2;
+				if (playerSnake.segments[segment].y > arenaY2)
+					playerSnake.segments[segment].y = arenaY1;
+				else if (playerSnake.segments[segment].y < arenaY1)
+					playerSnake.segments[segment].y = arenaY2;
 			}
 
-			distanceToGoodie = sqrt((segmentArr[0].x - xo) * (segmentArr[0].x - xo) + (segmentArr[0].y - yo) * (segmentArr[0].y - yo));
+			distanceToGoodie = sqrt((playerSnake.segments[0].x - xo) * (playerSnake.segments[0].x - xo) + (playerSnake.segments[0].y - yo) * (playerSnake.segments[0].y - yo));
 
 			if (distanceToGoodie < 20) {
 				printf("COLLISION!!!\n");
 				xo = arenaX1 + (rand() % (arenaX2 - 50));
 				yo = arenaY1 + (rand() % (arenaY2 - 50));
 				score++;
-				tailCurrentLen++;
-				segmentArr[tailCurrentLen].exists = true;
-
-				// debug
-				/*printf("Tail length: %d\n", tailCurrentLen);
-				printf("Tail length - 1: %d\n", (tailCurrentLen - 1));
-				printf("Tail exists: %d\n", segmentArr[tailCurrentLen].exists);
-				printf("Previous link x vel: %d\n", segmentArr[tailCurrentLen - 1].xVelocity);
-				printf("Previous link y vel: %d\n", segmentArr[tailCurrentLen - 1].yVelocity);*/
-
-				segmentArr[tailCurrentLen].xVelocity = segmentArr[tailCurrentLen - 1].xVelocity;
-				segmentArr[tailCurrentLen].yVelocity = segmentArr[tailCurrentLen - 1].yVelocity;
-
-				if (segmentArr[tailCurrentLen - 1].xVelocity == snakeSpeed)
-				{
-					segmentArr[tailCurrentLen].x = segmentArr[tailCurrentLen - 1].x - 40;
-				}
-				else if (segmentArr[tailCurrentLen - 1].xVelocity == -snakeSpeed)
-				{
-					segmentArr[tailCurrentLen].x = segmentArr[tailCurrentLen - 1].x + 40;
-				}
-				else
-				{
-					segmentArr[tailCurrentLen].x = segmentArr[tailCurrentLen - 1].x;
-				}
-
-				if (segmentArr[(tailCurrentLen - 1)].yVelocity == snakeSpeed)
-				{
-					segmentArr[tailCurrentLen].y = segmentArr[tailCurrentLen - 1].y - 40;
-				}
-				else if (segmentArr[(tailCurrentLen - 1)].yVelocity == -snakeSpeed)
-				{
-					segmentArr[tailCurrentLen].y = segmentArr[tailCurrentLen - 1].y + 40;
-				}
-				else
-				{
-					segmentArr[tailCurrentLen].y = segmentArr[tailCurrentLen - 1].y;
-				}
+				addNewSegment(&playerSnake);
 			}
 
-			for (int i = 0; i < tailCurrentLen; i++)
+			for (int i = 0; i < playerSnake.size - 1; i++)
 			{
 				int snakeIndex = i + 1;
-				segmentArr[snakeIndex].distanceToHead = sqrt((segmentArr[snakeIndex].x - segmentArr[0].x) * (segmentArr[snakeIndex].x - segmentArr[0].x) + (segmentArr[snakeIndex].y - segmentArr[0].y) * (segmentArr[snakeIndex].y - segmentArr[0].y));
-				int distanceToHead = segmentArr[snakeIndex].distanceToHead;
+				playerSnake.segments[snakeIndex].distanceToHead = sqrt((playerSnake.segments[snakeIndex].x - playerSnake.segments[0].x) * (playerSnake.segments[snakeIndex].x - playerSnake.segments[0].x) + (playerSnake.segments[snakeIndex].y - playerSnake.segments[0].y) * (playerSnake.segments[snakeIndex].y - playerSnake.segments[0].y));
+				int distanceToHead = playerSnake.segments[snakeIndex].distanceToHead;
 
 				//debug
 				//printf("Tail %d distance to head: %d\n", i, distanceToHead);
@@ -288,32 +218,32 @@ void main(void)
 				keyPressed = _getch();
 				switch (keyPressed) {
 				case 119: //key w
-					segmentArr[0].yVelocity = -snakeSpeed;
-					segmentArr[0].xVelocity = 0;
-					setArrVal(&pathMap, PATH_N, (segmentArr[0].y - arenaOffset), (segmentArr[0].x - arenaOffset), ROWS, COLS);
+					playerSnake.segments[0].yVelocity = -playerSnake.speed;
+					playerSnake.segments[0].xVelocity = 0;
+					setArrVal(&pathMap, PATH_N, (playerSnake.segments[0].y - arenaOffset), (playerSnake.segments[0].x - arenaOffset), ROWS, COLS);
 					//debug
-					//printf("North marker placed at:  (%d, %d)\n", (segmentArr[0].y - arenaOffset), (segmentArr[0].x - arenaOffset) );
+					//printf("North marker placed at:  (%d, %d)\n", (playerSnake.segments[0].y - arenaOffset), (playerSnake.segments[0].x - arenaOffset) );
 					break;
 				case 115: //key s
-					segmentArr[0].yVelocity = snakeSpeed;
-					segmentArr[0].xVelocity = 0;
-					setArrVal(&pathMap, PATH_S, (segmentArr[0].y - arenaOffset), (segmentArr[0].x - arenaOffset), ROWS, COLS);
+					playerSnake.segments[0].yVelocity = playerSnake.speed;
+					playerSnake.segments[0].xVelocity = 0;
+					setArrVal(&pathMap, PATH_S, (playerSnake.segments[0].y - arenaOffset), (playerSnake.segments[0].x - arenaOffset), ROWS, COLS);
 					//debug
-					//printf("South marker placed at:  (%d, %d)\n", (segmentArr[0].y - arenaOffset), (segmentArr[0].x - arenaOffset) );
+					//printf("South marker placed at:  (%d, %d)\n", (playerSnake.segments[0].y - arenaOffset), (playerSnake.segments[0].x - arenaOffset) );
 					break;
 				case 97: //key a
-					segmentArr[0].xVelocity = -snakeSpeed;
-					segmentArr[0].yVelocity = 0;
-					setArrVal(&pathMap, PATH_W, (segmentArr[0].y - arenaOffset), (segmentArr[0].x - arenaOffset), ROWS, COLS);
+					playerSnake.segments[0].xVelocity = -playerSnake.speed;
+					playerSnake.segments[0].yVelocity = 0;
+					setArrVal(&pathMap, PATH_W, (playerSnake.segments[0].y - arenaOffset), (playerSnake.segments[0].x - arenaOffset), ROWS, COLS);
 					//debug
-					//printf("West marker placed at:  (%d, %d)\n", (segmentArr[0].y - arenaOffset), (segmentArr[0].x - arenaOffset) );
+					//printf("West marker placed at:  (%d, %d)\n", (playerSnake.segments[0].y - arenaOffset), (playerSnake.segments[0].x - arenaOffset) );
 					break;
 				case 100: //key d
-					segmentArr[0].xVelocity = snakeSpeed;
-					segmentArr[0].yVelocity = 0;
-					setArrVal(&pathMap, PATH_E, (segmentArr[0].y - arenaOffset), (segmentArr[0].x - arenaOffset), ROWS, COLS);
+					playerSnake.segments[0].xVelocity = playerSnake.speed;
+					playerSnake.segments[0].yVelocity = 0;
+					setArrVal(&pathMap, PATH_E, (playerSnake.segments[0].y - arenaOffset), (playerSnake.segments[0].x - arenaOffset), ROWS, COLS);
 					//debug
-					//printf("East marker placed at:  (%d, %d)\n", (segmentArr[0].y - arenaOffset), (segmentArr[0].x - arenaOffset) );
+					//printf("East marker placed at:  (%d, %d)\n", (playerSnake.segments[0].y - arenaOffset), (playerSnake.segments[0].x - arenaOffset) );
 					break;
 				}
 				//printf("key pressed is %d", c);
@@ -321,11 +251,11 @@ void main(void)
 
 			// change segment's velocity to follow the path of prev ious segments
 			// trigger a change when the tail segment's coordinate on the path map has a directional flag
-			for (int segmentNum = 0; segmentNum <= tailCurrentLen; segmentNum++)
+			for (int segmentNum = 0; segmentNum <= playerSnake.size - 1; segmentNum++)
 			{
 				// find direction change when the segment crosses a point where the snake has changed direction
-				int xPos = segmentArr[segmentNum].x - arenaOffset;
-				int yPos = segmentArr[segmentNum].y - arenaOffset;
+				int xPos = playerSnake.segments[segmentNum].x - arenaOffset;
+				int yPos = playerSnake.segments[segmentNum].y - arenaOffset;
 				// the direction the path map's
 				int pathVal = getArrVal(&pathMap, yPos, xPos, ROWS, COLS);
 
@@ -338,26 +268,26 @@ void main(void)
 						break;
 					case PATH_S: //down
 						//printf("This should turn South\n");
-						segmentArr[segmentNum].yVelocity = snakeSpeed;
-						segmentArr[segmentNum].xVelocity = 0;
+						playerSnake.segments[segmentNum].yVelocity = playerSnake.speed;
+						playerSnake.segments[segmentNum].xVelocity = 0;
 						break;
 					case PATH_N: //upward
-						segmentArr[segmentNum].yVelocity = -snakeSpeed;
-						segmentArr[segmentNum].xVelocity = 0;
+						playerSnake.segments[segmentNum].yVelocity = -playerSnake.speed;
+						playerSnake.segments[segmentNum].xVelocity = 0;
 						break;
 					case PATH_W: //to the left
-						segmentArr[segmentNum].xVelocity = -snakeSpeed;
-						segmentArr[segmentNum].yVelocity = 0;
+						playerSnake.segments[segmentNum].xVelocity = -playerSnake.speed;
+						playerSnake.segments[segmentNum].yVelocity = 0;
 						break;
 					case PATH_E: //to the right
-						segmentArr[segmentNum].xVelocity = snakeSpeed;
-						segmentArr[segmentNum].yVelocity = 0;
+						playerSnake.segments[segmentNum].xVelocity = playerSnake.speed;
+						playerSnake.segments[segmentNum].yVelocity = 0;
 						break;
 					default:
 						break;
 					}
 				}
-				if (segmentNum == tailCurrentLen)
+				if (segmentNum == playerSnake.size - 1)
 				{
 					setArrVal(&pathMap, PATH_EMPTY, yPos, xPos, ROWS, COLS); // clear direction change marker from the map
 
