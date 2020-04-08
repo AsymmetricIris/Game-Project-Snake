@@ -162,6 +162,8 @@
     <ClCompile Include="openbgi-sources-1.5\openbgi\library\Server.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="colliders.h" />
+    <ClInclude Include="fixedSnake.h" />
     <ClInclude Include="mySnake_arrays.h" />
     <ClInclude Include="openbgi-sources-1.5\openbgi\library\graphics.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>

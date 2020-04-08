@@ -53,7 +53,8 @@
 
 
 #include "graphics.h"
-#include "snake.h"
+//include "snake.h"
+#include "fixedSnake.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <conio.h>   
@@ -72,7 +73,7 @@
 #define PATH_W 7
 #define PATH_NW 8
 #define PATH_EMPTY 0
-#define ROWS 501
+#define ROWS 449
 #define COLS 501
 
 #define getLength(x) (sizeof(x) / sizeof(x[0]))
@@ -93,7 +94,7 @@ void main(void)
 	int arenaX1 = arenaOffset;
 	int arenaY1 = arenaOffset;
 	int arenaX2 = 500;
-	int arenaY2 = 500;
+	int arenaY2 = 448;
 	int pathMap[ROWS][COLS];
 	int* ptr_pathMap = &pathMap;
 
@@ -171,7 +172,7 @@ void main(void)
 			updateSnakePos(&playerSnake);
 
 
-			// Send the serpent to the opposite side of the arena if it touches a wall
+			// End the game if the snake touches a wall
 			// TODO - make more accurate
 			for (int segment = 0; segment <= playerSnake.size; segment++)
 			{
@@ -379,13 +380,3 @@ int getArrVal(int* ptr_arr, int row, int col, int array_rows, int array_cols)
 	// TODO - validate array length with address
 	return *(ptr_arr + (row * array_cols) + col);
 }
-
-//void setArrVal(int* ptr_arr, int val, int row, int col, int array_rows, int array_cols);
-//{
-//	*(ptr_arr + (row * cols) + col) = val;
-//}
-//
-//int getArrVal(int* ptr_arr, int row, int col, int array_rows, int array_cols);
-//{
-//	return *(ptr_arr + (row * cols) + col);
-//}

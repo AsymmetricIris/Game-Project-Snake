@@ -32,9 +32,9 @@ SnakeSegment createSnakeSegment(int xPos, int yPos, int xVelocity, int yVelocity
 	return snakeSegment;
 }
 
-void init_Snake(Snake* snake, int xPos, int yPos, int xVelocity, int yVelocity)
+void init_segments(Snake* snake, int xPos, int yPos, int xVelocity, int yVelocity)
 {
-	snake->segments = malloc(sizeof(SnakeSegment));
+	snake->segments = (SnakeSegment*) calloc(1, sizeof(SnakeSegment));
 	snake->segments[0] = createSnakeSegment(xPos, yPos, xVelocity, yVelocity);
 	snake->size = 1;
 }
@@ -43,62 +43,14 @@ Snake createSnake(int xPos, int yPos, int snakeSpeed)
 {
 	Snake snake;
 	snake.speed = snakeSpeed;
-	init_Snake(&snake, xPos, yPos, snake.speed, 0);
+	init_segments(&snake, xPos, yPos, snake.speed, 0);
 
 	return snake;
 }
 
-Snake* addSegment(Snake snake, SnakeSegment newSnakeSegment)
-{
-
-	int newSnakeSize = snake.size + 1;
-
-
-	SnakeSegment* ptr_newSnake = malloc((snake.size + 1) * sizeof(newSnakeSegment));
-
-
-	for (int segment = 0; segment < snake.size; segment++)
-	{
-		*(ptr_newSnake + segment) = snake.segments[segment];
-	}
-
-	for (int segment = snake.size; segment < newSnakeSize; segment++)
-	{
-		*(ptr_newSnake + segment) = newSnakeSegment;
-	}
-
-	printf("Input array size: %d\n", (sizeof(snake.segments) / sizeof(SnakeSegment)));
-	printf("Snake segment array size: %d\n", snake.size);
-	printf("New array size: %d\n", newSnakeSize);
-	return ptr_newSnake;
-}
-
-//Snake* addSegment(Snake snake)
-//{
-//	int newSnakeSize = snake.size + 1;
-//	int prevSegNum = snake.size - 1;
-//	SnakeSegment newSnakeSegment = createSnakeSegment(snake.segments[prevSegNum].x - 20, 
-//		snake.segments[prevSegNum].y - 20, snake.segments[prevSegNum].xVelocity, 
-//		snake.segments[prevSegNum].yVelocity);
-//
-//	SnakeSegment* ptr_newSnake = malloc((newSnakeSize) * sizeof(newSnakeSegment));
-//
-//
-//	for (int segment = 0; segment < snake.size; segment++)
-//	{
-//		*(ptr_newSnake + segment) = snake.segments[segment];
-//	}
-//
-//	for (int segment = snake.size; segment < newSnakeSize; segment++)
-//	{
-//		*(ptr_newSnake + segment) = newSnakeSegment;
-//	}
-//
-//	printf("Input array size: %d\n", sizeof(snake));
-//	printf("Snake segment array size: %d\n", snake.size);
-//	printf("New array size: %d\n", newSnakeSize);
-//	return ptr_newSnake;
-//}
+//	====================================================
+//	Add a segment to the segment array
+//void addSegment(Snake* snake, SnakeSegment newSegment)
 
 void addNewSegment(Snake* snake)
 {
@@ -142,29 +94,25 @@ void addNewSegment(Snake* snake)
 		snake->segments[prevSegIndex].xVelocity,
 		snake->segments[prevSegIndex].yVelocity);
 
-	SnakeSegment* ptr_newSegments = (SnakeSegment*) calloc(newSnakeSize, sizeof(SnakeSegment));
+	SnakeSegment* newSegments = (SnakeSegment*) calloc(newSnakeSize, sizeof(SnakeSegment));
 
 
 	for (int segment = 0; segment < snake->size; segment++)
 	{
-		*(ptr_newSegments + segment) = snake->segments[segment];
+		newSegments[segment] = snake->segments[segment];
 	}
 
 	for (int segment = snake->size; segment < newSnakeSize; segment++)
 	{
-		*(ptr_newSegments + segment) = newSnakeSegment;
+		newSegments[segment] = newSnakeSegment;
 	}
 
-	//TODO - make first print check return amount of elements in the array
 	//debug
-	//printf("Input array size: %d\n", (sizeof(snake->segments) / sizeof(SnakeSegment*)));
 	printf("Snake segment array size: %d\n", snake->size);
 
 	free(snake->segments);
-	snake->segments = ptr_newSegments;
-	snake->size = snake->size + 1;
-
-	//printf("New array size: %d\n", snake->size);
+	snake->segments = newSegments;
+	snake->size++;
 }
 
 void new_addNewSegment(Snake* snake)
