@@ -13,6 +13,8 @@
 //Use concatenation to increase tail length instead of a defined, invisible length with 'exists' fields
 //		Research if arrays can be concatenated
 //Implement hitboxes
+//		Implement interrupt-based system for moving hitboxes
+//			Hitboxes attached to bodies will move when the bodies' x and y positions change
 //		store hitboxes in an 2d array - hitMap
 //		move hitboxes according to the object they are attached to
 //		if a hitbox tries to set an index as a part of itself when that array is already part of another hitbox, return a collision
@@ -55,6 +57,7 @@
 #include "graphics.h"
 //include "snake.h"
 #include "fixedSnake.h"
+#include "colliders.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <conio.h>   
@@ -62,6 +65,7 @@
 #include <string.h>
 #include <errno.h>
 #include <math.h>
+#include <time.h>
 
 //definitions for the pathMap values
 #define PATH_N 1
@@ -73,8 +77,8 @@
 #define PATH_W 7
 #define PATH_NW 8
 #define PATH_EMPTY 0
-#define ROWS 449
-#define COLS 501
+#define ROWS 409
+#define COLS 451
 
 #define getLength(x) (sizeof(x) / sizeof(x[0]))
 
@@ -86,15 +90,15 @@ void setArrVal(int* ptr_arr, int val, int row, int col, int array_rows, int arra
 int getArrVal(int* ptr_arr, int row, int col, int array_rows, int array_cols);
 bool askToPlayAgain();
 
-void main(void)
+void main()
 {
 	// Initialise graphic window
 	int gd = DETECT, gm = 0;
 	int arenaOffset = 50;
 	int arenaX1 = arenaOffset;
 	int arenaY1 = arenaOffset;
-	int arenaX2 = 500;
-	int arenaY2 = 448;
+	int arenaX2 = 450;
+	int arenaY2 = 408;
 	int pathMap[ROWS][COLS];
 	int* ptr_pathMap = &pathMap;
 
@@ -119,6 +123,7 @@ void main(void)
 
 	int score = 0;
 	int highScore;
+	float millis = 0;
 
 	if ((err = fopen_s(&scoreInput, "scores.dat", "r")) != 0)
 	{
@@ -135,7 +140,7 @@ void main(void)
 
 	do {
 		printf("Playing game\n");
-		playerSnake = createSnake(100, 100, 10);
+		playerSnake = createSnake(145, 145, 10);
 
 		int xo = 200;
 		int yo = 300;
@@ -162,32 +167,48 @@ void main(void)
 			// draw circle in current position
 			for (int i = 0; i <= playerSnake.size - 1; i++)
 			{
-				drawAvatar(playerSnake.segments[i].x, playerSnake.segments[i].y);
+				drawAvatar(playerSnake.segments[i].body.x, playerSnake.segments[i].body.y);
 			}
 
 			// update position of circle of a fixed offset
 			setvisualpage(i % 2);
 			i++;
 
-			updateSnakePos(&playerSnake);
+			
+			millis += (clock() % 1000);
+			if (millis > 10000)
+			{
+				//debug
+				checkColliderPos_c(playerSnake.segments[0].body.collider_c);
+				updateSnakePos(&playerSnake);
+				millis = 0;
+			}
+			else
+			{
+				updateSnakePos(&playerSnake);
+			}
+			
+
 
 
 			// End the game if the snake touches a wall
 			// TODO - make more accurate
 			for (int segment = 0; segment <= playerSnake.size; segment++)
 			{
-				if (playerSnake.segments[segment].x > arenaX2)
-					playerSnake.segments[segment].x = arenaX1;
-				else if (playerSnake.segments[segment].x < arenaX1)
-					playerSnake.segments[segment].x = arenaX2;
+				if (playerSnake.segments[segment].body.x > arenaX2)
+					playerSnake.segments[segment].body.x = arenaX1;
+				else if (playerSnake.segments[segment].body.x < arenaX1)
+					playerSnake.segments[segment].body.x = arenaX2;
 
-				if (playerSnake.segments[segment].y > arenaY2)
-					playerSnake.segments[segment].y = arenaY1;
-				else if (playerSnake.segments[segment].y < arenaY1)
-					playerSnake.segments[segment].y = arenaY2;
+				if (playerSnake.segments[segment].body.y > arenaY2)
+					playerSnake.segments[segment].body.y = arenaY1;
+				else if (playerSnake.segments[segment].body.y < arenaY1)
+					playerSnake.segments[segment].body.y = arenaY2;
 			}
 
-			distanceToGoodie = sqrt((playerSnake.segments[0].x - xo) * (playerSnake.segments[0].x - xo) + (playerSnake.segments[0].y - yo) * (playerSnake.segments[0].y - yo));
+			distanceToGoodie = sqrt( \
+				( playerSnake.segments[0].body.x - xo) * ( playerSnake.segments[0].body.x - xo) \
+				+ ( playerSnake.segments[0].body.y - yo) * ( playerSnake.segments[0].body.y - yo) );
 
 			if (distanceToGoodie < 20) {
 				printf("COLLISION!!!\n");
@@ -200,7 +221,11 @@ void main(void)
 			for (int i = 0; i < playerSnake.size - 1; i++)
 			{
 				int snakeIndex = i + 1;
-				playerSnake.segments[snakeIndex].distanceToHead = sqrt((playerSnake.segments[snakeIndex].x - playerSnake.segments[0].x) * (playerSnake.segments[snakeIndex].x - playerSnake.segments[0].x) + (playerSnake.segments[snakeIndex].y - playerSnake.segments[0].y) * (playerSnake.segments[snakeIndex].y - playerSnake.segments[0].y));
+				playerSnake.segments[snakeIndex].distanceToHead = sqrt(
+					(playerSnake.segments[snakeIndex].body.x - playerSnake.segments[0].body.x) 
+					* (playerSnake.segments[snakeIndex].body.x - playerSnake.segments[0].body.x)
+					+ (playerSnake.segments[snakeIndex].body.y - playerSnake.segments[0].body.y) 
+					* (playerSnake.segments[snakeIndex].body.y - playerSnake.segments[0].body.y));
 				int distanceToHead = playerSnake.segments[snakeIndex].distanceToHead;
 
 				//debug
@@ -217,34 +242,35 @@ void main(void)
 			// change head's velocity on user input
 			if (_kbhit()) { // see http://www.programmingsimplified.com/c/conio.h/kbhit
 				keyPressed = _getch();
+								
 				switch (keyPressed) {
 				case 119: //key w
 					playerSnake.segments[0].yVelocity = -playerSnake.speed;
 					playerSnake.segments[0].xVelocity = 0;
-					setArrVal(&pathMap, PATH_N, (playerSnake.segments[0].y - arenaOffset), (playerSnake.segments[0].x - arenaOffset), ROWS, COLS);
+					setArrVal(&pathMap, PATH_N, (playerSnake.segments[0].body.y - arenaOffset), (playerSnake.segments[0].body.x - arenaOffset), ROWS, COLS);
 					//debug
 					//printf("North marker placed at:  (%d, %d)\n", (playerSnake.segments[0].y - arenaOffset), (playerSnake.segments[0].x - arenaOffset) );
 					break;
 				case 115: //key s
 					playerSnake.segments[0].yVelocity = playerSnake.speed;
 					playerSnake.segments[0].xVelocity = 0;
-					setArrVal(&pathMap, PATH_S, (playerSnake.segments[0].y - arenaOffset), (playerSnake.segments[0].x - arenaOffset), ROWS, COLS);
+					setArrVal(&pathMap, PATH_S, (playerSnake.segments[0].body.y - arenaOffset), (playerSnake.segments[0].body.x - arenaOffset), ROWS, COLS);
 					//debug
-					//printf("South marker placed at:  (%d, %d)\n", (playerSnake.segments[0].y - arenaOffset), (playerSnake.segments[0].x - arenaOffset) );
+					//printf("South marker placed at:  (%d, %d)\n", (playerSnake.segments[0].body.y - arenaOffset), (playerSnake.segments[0].body.x - arenaOffset) );
 					break;
 				case 97: //key a
 					playerSnake.segments[0].xVelocity = -playerSnake.speed;
 					playerSnake.segments[0].yVelocity = 0;
-					setArrVal(&pathMap, PATH_W, (playerSnake.segments[0].y - arenaOffset), (playerSnake.segments[0].x - arenaOffset), ROWS, COLS);
+					setArrVal(&pathMap, PATH_W, (playerSnake.segments[0].body.y - arenaOffset), (playerSnake.segments[0].body.x - arenaOffset), ROWS, COLS);
 					//debug
-					//printf("West marker placed at:  (%d, %d)\n", (playerSnake.segments[0].y - arenaOffset), (playerSnake.segments[0].x - arenaOffset) );
+					//printf("West marker placed at:  (%d, %d)\n", (playerSnake.segments[0].body.y - arenaOffset), (playerSnake.segments[0].body.x - arenaOffset) );
 					break;
 				case 100: //key d
 					playerSnake.segments[0].xVelocity = playerSnake.speed;
 					playerSnake.segments[0].yVelocity = 0;
-					setArrVal(&pathMap, PATH_E, (playerSnake.segments[0].y - arenaOffset), (playerSnake.segments[0].x - arenaOffset), ROWS, COLS);
+					setArrVal(&pathMap, PATH_E, (playerSnake.segments[0].body.y - arenaOffset), (playerSnake.segments[0].body.x - arenaOffset), ROWS, COLS);
 					//debug
-					//printf("East marker placed at:  (%d, %d)\n", (playerSnake.segments[0].y - arenaOffset), (playerSnake.segments[0].x - arenaOffset) );
+					//printf("East marker placed at:  (%d, %d)\n", (playerSnake.segments[0].body.y - arenaOffset), (playerSnake.segments[0].body.x - arenaOffset) );
 					break;
 				}
 				//printf("key pressed is %d", c);
@@ -255,8 +281,8 @@ void main(void)
 			for (int segmentNum = 0; segmentNum <= playerSnake.size - 1; segmentNum++)
 			{
 				// find direction change when the segment crosses a point where the snake has changed direction
-				int xPos = playerSnake.segments[segmentNum].x - arenaOffset;
-				int yPos = playerSnake.segments[segmentNum].y - arenaOffset;
+				int xPos = playerSnake.segments[segmentNum].body.x - arenaOffset;
+				int yPos = playerSnake.segments[segmentNum].body.y - arenaOffset;
 				// the direction the path map's
 				int pathVal = getArrVal(&pathMap, yPos, xPos, ROWS, COLS);
 
