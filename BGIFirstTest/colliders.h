@@ -27,6 +27,28 @@ CircleCollider createCircleCollider(int radius, int xPos, int yPos)
 	return collider;
 }
 
+void init_BoxCollider(BoxCollider* ptr_collider, int x1, int y1,
+	int x2, int y2)
+{
+	
+	ptr_collider->x1 = x1;
+	ptr_collider->y1 = y1;
+	ptr_collider->x2 = x2;
+	ptr_collider->y2 = y2;
+	ptr_collider->sizeX = x2 - x1;
+	ptr_collider->sizeY = y1 - y2;
+	ptr_collider->centreX = x1 + (ptr_collider->sizeX / 2);
+	ptr_collider->centreY = y1 - (ptr_collider->sizeY / 2);
+}
+
+BoxCollider createBoxCollider(int xPos, int yPos, int x2, int y2)
+{
+	BoxCollider collider;
+	init_BoxCollider(&collider, xPos, yPos, x2, y2);
+
+	return collider;
+}
+
 void init_BodyBoxCollider(BoxCollider* ptr_collider, int xPos, int yPos,
 	int sizeX, int sizeY)
 {
@@ -40,7 +62,7 @@ void init_BodyBoxCollider(BoxCollider* ptr_collider, int xPos, int yPos,
 	ptr_collider->centreY = yPos;
 }
 
-BoxCollider createBoxCollider(int xPos, int yPos, int sizeX, int sizeY)
+BoxCollider createBodyBoxCollider(int xPos, int yPos, int sizeX, int sizeY)
 {
 	BoxCollider collider;
 	init_BodyBoxCollider(&collider, xPos, yPos, sizeX, sizeY);
@@ -59,6 +81,22 @@ bool collided_cc(CircleCollider collider1, CircleCollider collider2)
 		return false;
 }
 
+void checkColliderPos_c(CircleCollider collider)
+{
+	printf("Circle collider x: %d\t y: %d\t radius: %d\n", collider.x, collider.y, collider.radius);
+	printf("x1: %d\t y1: %d\t x2: %d\t y2: %d\n", collider.x - collider.radius,
+		collider.y + collider.radius, collider.x + collider.radius,
+		collider.y - collider.radius);
+}
+
+void checkColliderPos_b(BoxCollider collider)
+{
+	printf("Box collider x: %d\t y: %d\t sizeX: %d\t sizeY: %d\n", collider.centreX,
+		collider.centreY, (collider.x2 - collider.x1), (collider.y2 - collider.y1));
+	printf("x1: %d\t y1: %d\t x2: %d\t y2: %d\n", collider.x1, collider.y1,
+		collider.x2, collider.y2);
+}
+
 bool collided_cb(CircleCollider c_Collider, BoxCollider b_Collider)
 {
 	if (
@@ -67,32 +105,40 @@ bool collided_cb(CircleCollider c_Collider, BoxCollider b_Collider)
 				// x1, y1 of circle's box
 		(c_Collider.x - c_Collider.radius >= b_Collider.x1)
 			&& (c_Collider.x - c_Collider.radius <= b_Collider.x2)
-			&& (c_Collider.y + c_Collider.radius >= b_Collider.y1)
-			&& (c_Collider.y + c_Collider.radius <= b_Collider.y2)
+			&& (c_Collider.y + c_Collider.radius <= b_Collider.y1)
+			&& (c_Collider.y + c_Collider.radius >= b_Collider.y2)
 			) || (
 				// x2, y2 of circle's box
 			(c_Collider.x + c_Collider.radius >= b_Collider.x1)
 				&& (c_Collider.x + c_Collider.radius <= b_Collider.x2)
-				&& (c_Collider.y - c_Collider.radius >= b_Collider.y1)
-				&& (c_Collider.y - c_Collider.radius <= b_Collider.y2)
+				&& (c_Collider.y - c_Collider.radius <= b_Collider.y1)
+				&& (c_Collider.y - c_Collider.radius >= b_Collider.y2)
 				) || (
 					// for collider 2 inside collider 1
 						// is x1, y1 inside collider 1
 				(b_Collider.x1 >= c_Collider.x - c_Collider.radius)
 					&& (b_Collider.x1 <= c_Collider.x + c_Collider.radius)
-					&& (b_Collider.y1 >= c_Collider.y - c_Collider.radius)
 					&& (b_Collider.y1 <= c_Collider.y + c_Collider.radius)
+					&& (b_Collider.y1 >= c_Collider.y - c_Collider.radius)
 					) || (
 						// is x2, y2 inside collider 1
 					(b_Collider.x2 >= c_Collider.x - c_Collider.radius)
 						&& (b_Collider.x2 <= c_Collider.x + c_Collider.radius)
-						&& (b_Collider.y2 >= c_Collider.y - c_Collider.radius)
 						&& (b_Collider.y2 <= c_Collider.y + c_Collider.radius)
+						&& (b_Collider.y2 >= c_Collider.y - c_Collider.radius)
 						)
 		)
+	{
+		//printf("Collided: True\n");
 		return true;
+	}
 	else
+	{
+		/*checkColliderPos_c(c_Collider);
+		checkColliderPos_b(b_Collider);
+		printf("Collided: False\n");*/
 		return false;
+	}
 }
 
 bool collided_bc(BoxCollider b_Collider, CircleCollider c_Collider)
@@ -125,10 +171,20 @@ bool collided_bc(BoxCollider b_Collider, CircleCollider c_Collider)
 						&& (b_Collider.y2 >= c_Collider.y - c_Collider.radius)
 						&& (b_Collider.y2 <= c_Collider.y + c_Collider.radius)
 						)
+
 		)
+	{
+		//printf("Collided: True\n");
 		return true;
+	}		
 	else
+	{
+		/*checkColliderPos_c(c_Collider);
+		checkColliderPos_b(b_Collider);
+		printf("Collided: False\n");*/
 		return false;
+	}
+		
 }
 
 bool collided_bb(BoxCollider collider1, BoxCollider collider2)
@@ -162,21 +218,14 @@ bool collided_bb(BoxCollider collider1, BoxCollider collider2)
 						&& (collider2.y2 <= collider1.y1)
 						)
 		)
+	{
+		printf("Collided: True\n");
+		return true;
+	}
+	else
+	{
+		printf("Collided: False\n");
 		return false;
+	}
 }
 
-void checkColliderPos_c(CircleCollider collider)
-{
-	printf("Circle collider x: %d\t y: %d\t radius: %d\n", collider.x, collider.y, collider.radius);
-	printf("x1: %d\t y1: %d\t x2: %d\t y2: %d\n", collider.x - collider.radius,
-		collider.y + collider.radius, collider.x + collider.radius,
-		collider.y - collider.radius);
-}
-
-void checkColliderPos_b(BoxCollider collider)
-{
-	printf("Box collider x: %d\t y: %d\t sizeX: %d\t sizeY: %d\n", collider.centreX,
-		collider.centreY, (collider.x2 - collider.x1), (collider.y2 - collider.y1));
-	printf("x1: %d\t y1: %d\t x2: %d\t y2: %d\n", collider.x1, collider.y1,
-		collider.x2, collider.y2);
-}

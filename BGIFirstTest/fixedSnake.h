@@ -17,29 +17,31 @@ typedef struct Snake
 {
 	SnakeSegment segments[100];
 	int size;
+	int radius;
 	int speed;
 }Snake;
 
-void init_SnakeSegment(SnakeSegment* snakeSegment, int xPos, int yPos, int xVelocity, int yVelocity)
+void init_SnakeSegment(SnakeSegment* snakeSegment, int xPos, int yPos, int xVelocity, int yVelocity, int colliderRadius)
 {
 	RigidBody segmentBody = createRigidBody(xPos, yPos);
 	snakeSegment->body = segmentBody;
+	snakeSegment->body.collider_c = createCircleCollider(colliderRadius, xPos, yPos);
 	snakeSegment->xVelocity = xVelocity;
 	snakeSegment->yVelocity = yVelocity;
 }
 
-SnakeSegment createSnakeSegment(int xPos, int yPos, int xVelocity, int yVelocity)
+SnakeSegment createSnakeSegment(int xPos, int yPos, int xVelocity, int yVelocity, int colliderRadius)
 {
 	SnakeSegment snakeSegment;
-	init_SnakeSegment(&snakeSegment, xPos, yPos, xVelocity, yVelocity);
+	init_SnakeSegment(&snakeSegment, xPos, yPos, xVelocity, yVelocity, colliderRadius);
 	snakeSegment.exists = true;
 
 	return snakeSegment;
 }
 
-void init_segments(Snake* snake, int xPos, int yPos, int xVelocity, int yVelocity)
+void init_segments(Snake* snake, int xPos, int yPos, int xVelocity, int yVelocity, int colliderRadius)
 {
-	snake->segments[0] = createSnakeSegment(xPos, yPos, xVelocity, yVelocity);
+	snake->segments[0] = createSnakeSegment(xPos, yPos, xVelocity, yVelocity, colliderRadius);
 	snake->size = 1;
 }
 
@@ -47,7 +49,8 @@ Snake createSnake(int xPos, int yPos, int snakeSpeed)
 {
 	Snake snake;
 	snake.speed = snakeSpeed;
-	init_segments(&snake, xPos, yPos, 0, snake.speed);
+	snake.radius = 20;
+	init_segments(&snake, xPos, yPos, 0, snake.speed, snake.radius);
 
 	return snake;
 }
@@ -61,12 +64,8 @@ int addNewSegment(Snake* snake)
 	//debug
 	printf("Body before - x: %d\t y: %d\n", snake->segments[0].body.x,
 		snake->segments[0].body.y);
-	printf("Pointer before - x: %d\t y: %d\n", snake->segments[0].body.x,
-		snake->segments[0].body.y);
-	printf("End body before - x: %d\t y: %d\n", snake->segments[snake->size - 1].body.x,
-		snake->segments[snake->size - 1].body.y);
-	printf("End pointer before - x: %d\t y: %d\n", snake->segments[snake->size - 1].body.x,
-		snake->segments[snake->size - 1].body.y);
+	printf("Hitbox before - x: %d\t y: %d\n", snake->segments[0].body.collider_c.x,
+		snake->segments[0].body.collider_c.y);
 
 	if (snake->size < 100)
 	{
@@ -108,19 +107,16 @@ int addNewSegment(Snake* snake)
 
 		snake->segments[newSegIndex] = createSnakeSegment(newSegmentX, newSegmentY,
 			snake->segments[prevSegIndex].xVelocity,
-			snake->segments[prevSegIndex].yVelocity);
+			snake->segments[prevSegIndex].yVelocity,
+			snake->radius);
 
 		snake->size++;
 
 		//debug
-		printf("Body after - x: %d\t y: %d\n", snake->segments[0].body.x,
-			snake->segments[0].body.y);
-		printf("Pointer after - x: %d\t y: %d\n", snake->segments[0].body.x,
-			snake->segments[0].body.y);
 		printf("End body after - x: %d\t y: %d\n", snake->segments[snake->size - 1].body.x,
 			snake->segments[snake->size - 1].body.y);
-		printf("End pointer after - x: %d\t y: %d\n", snake->segments[snake->size - 1].body.x,
-			snake->segments[snake->size - 1].body.y);
+		printf("End hitbox after - x: %d\t y: %d\n", snake->segments[snake->size - 1].body.collider_c.x,
+			snake->segments[snake->size - 1].body.collider_c.y);
 
 		return 1;
 	}
@@ -141,14 +137,14 @@ void updateSnakePos(Snake* snake)
 void verbose_updateSnakePos(Snake* snake)
 {
 	//debug
-	printf("Body before - x: %d\t y: %d\n", snake->segments[0].body.x,
+	printf("Head Body before - x: %d\t y: %d\n", snake->segments[0].body.x,
 		snake->segments[0].body.y);
-	printf("Pointer before - x: %d\t y: %d\n", snake->segments[0].body.x,
-		snake->segments[0].body.y);
-	printf("End body after - x: %d\t y: %d\n", snake->segments[snake->size - 1].body.x,
+	printf("Head Hitbox before - x: %d\t y: %d\n", snake->segments[0].body.collider_c.x,
+		snake->segments[0].body.collider_c.y);
+	printf("End Body before - x: %d\t y: %d\n", snake->segments[snake->size - 1].body.x,
 		snake->segments[snake->size - 1].body.y);
-	printf("End pointer after - x: %d\t y: %d\n", snake->segments[snake->size - 1].body.x,
-		snake->segments[snake->size - 1].body.y);
+	printf("End Hitbox before - x: %d\t y: %d\n", snake->segments[snake->size - 1].body.collider_c.x,
+		snake->segments[snake->size - 1].body.collider_c.y);
 
 	for (int segment = 0; segment < snake->size; segment++)
 	{
@@ -158,14 +154,14 @@ void verbose_updateSnakePos(Snake* snake)
 	}
 
 	//debug
-	printf("Body after - x: %d\t y: %d\n", snake->segments[0].body.x,
+	printf("Head Body after - x: %d\t y: %d\n", snake->segments[0].body.x,
 		snake->segments[0].body.y);
-	printf("Pointer after - x: %d\t y: %d\n", snake->segments[0].body.x,
-		snake->segments[0].body.y);
-	printf("End body after - x: %d\t y: %d\n", snake->segments[snake->size - 1].body.x,
+	printf("Head Hitbox after - x: %d\t y: %d\n", snake->segments[0].body.collider_c.x,
+		snake->segments[0].body.collider_c.y);
+	printf("End Body after - x: %d\t y: %d\n", snake->segments[snake->size - 1].body.x,
 		snake->segments[snake->size - 1].body.y);
-	printf("End pointer after - x: %d\t y: %d\n", snake->segments[snake->size - 1].body.x,
-		snake->segments[snake->size - 1].body.y);
+	printf("End Hitbox after - x: %d\t y: %d\n", snake->segments[snake->size - 1].body.collider_c.x,
+		snake->segments[snake->size - 1].body.collider_c.y);
 }
 
 //debug

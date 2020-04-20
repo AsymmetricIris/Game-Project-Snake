@@ -154,7 +154,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="BGIFirstTest.c" />
+    <ClCompile Include="Main.c" />
     <ClCompile Include="openbgi-sources-1.5\openbgi\library\BGI.C" />
     <ClCompile Include="openbgi-sources-1.5\openbgi\library\Client.c" />
     <ClCompile Include="openbgi-sources-1.5\openbgi\library\graphics.c" />
@@ -171,6 +171,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="RigidBody.h" />
     <ClInclude Include="snake.h" />
+    <ClInclude Include="SnakeGame.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="scores.dat" />
