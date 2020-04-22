@@ -184,7 +184,6 @@ void main()
 			// draw circle in current position
 			for (int segment = 0; segment <= playerSnake.size - 1; segment++)
 			{
-				//drawAvatar(playerSnake.segments[segment].body.x, playerSnake.segments[segment].body.y);
 				drawSnakeSegment(&playerSnake.segments[segment]);
 			}
 
@@ -192,22 +191,7 @@ void main()
 			setvisualpage(i % 2);
 			i++;
 
-
-			millis += (clock() % 1000);
-			if (millis > 10000)
-			{
-				//debug
-				checkColliderPos_c(playerSnake.segments[0].body.collider_c);
-				verbose_updateSnakePos(&playerSnake);
-				millis = 0;
-			}
-			else
-			{
-				updateSnakePos(&playerSnake);
-			}
-
-
-
+			updateSnakePos(&playerSnake);
 
 			// End the game if the snake touches a wall
 			endIfSnakeCrashes(&playerSnake, &gameContinue, boundary_n, boundary_e, boundary_s, boundary_w);
@@ -215,11 +199,10 @@ void main()
 
 			if (collided_cc(playerSnake.segments[0].body.collider_c, fruit.body.collider_c))
 			{
-				do
-				{
+				do {
 					setFruitPos(&fruit,
-						arenaX1 + (rand() % (arenaX2 - arenaOffset - fruit.radius)),
-						arenaY2 + (rand() % (arenaY1 - arenaOffset - fruit.radius)));
+						arenaOffset + fruit.radius + (rand() % (arenaX2 - arenaOffset - fruit.radius - 1)),
+						arenaOffset + fruit.radius + (rand() % (arenaY1 - arenaOffset - fruit.radius - 1)));
 				} while (fruitIsInBody(&playerSnake, &fruit));
 				score++;
 				addNewSegment(&playerSnake);
@@ -407,6 +390,7 @@ bool fruitIsInBody(Snake* ptr_snake, Fruit* ptr_fruit)
 		if (collided_cc(ptr_snake->segments[segment].body.collider_c, ptr_fruit->body.collider_c))
 			return true;
 	}
+	return false;
 }
 
 void drawSnakeSegment(SnakeSegment* ptr_segment)
