@@ -9,7 +9,7 @@ typedef struct CircleCollider {
 }CircleCollider;
 
 typedef struct BoxCollider {
-	int radius, x1, y1, x2, y2, sizeX, sizeY, centreX, centreY;
+	int x1, y1, x2, y2, sizeX, sizeY, centreX, centreY;
 }BoxCollider;
 
 void init_CircleCollider(CircleCollider* collider, int radius, int xPos, int yPos)
@@ -97,6 +97,7 @@ void checkColliderPos_b(BoxCollider collider)
 		collider.x2, collider.y2);
 }
 
+// TODO - make more accurate
 bool collided_cb(CircleCollider c_Collider, BoxCollider b_Collider)
 {
 	if (
@@ -129,18 +130,15 @@ bool collided_cb(CircleCollider c_Collider, BoxCollider b_Collider)
 						)
 		)
 	{
-		//printf("Collided: True\n");
 		return true;
 	}
 	else
 	{
-		/*checkColliderPos_c(c_Collider);
-		checkColliderPos_b(b_Collider);
-		printf("Collided: False\n");*/
 		return false;
 	}
 }
 
+// TODO - make more accurate
 bool collided_bc(BoxCollider b_Collider, CircleCollider c_Collider)
 {
 	if (

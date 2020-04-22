@@ -8,23 +8,23 @@
 // E - njoyment
 
 //TODO -
+//	Wacky things to fix
+//		Segments getting detached
+//		Seemingly random freezing
+//			May be happening when trying to add a segment to a coordinate outsode of the field, when the 
+//			snake collects a fruit and the last segment is just inside the boundary, travelling away from it.
+//		Snake
+//			Cannot always add segments properly with variable-sized array
 //	Snake
-//Implement head and tail segments as separate structs
 //Use concatenation to increase tail length instead of a defined, invisible length with 'exists' fields
-//		Research if arrays can be concatenated
+//	Calloc-driven implementation not playing ball
+//	Currently using defined length with 100 elements
 //Implement hitboxes
 //		Implement interrupt-based system for moving hitboxes
 //			Hitboxes attached to bodies will move when the bodies' x and y positions change
-//		store hitboxes in an 2d array - hitMap
-//		move hitboxes according to the object they are attached to
-//		if a hitbox tries to set an index as a part of itself when that array is already part of another hitbox, return a collision
-//		note: ensure loop does not lead to hitboxes endlessly overwriting each other
-//		note: algorithm becomes very resoource intensive with large hitboxes
-//		algorithm
-//			store an array of hitboxes vertices with there addresses
-//			compare the positions of each vertext of each hitbox
-//			when any vertex of one hitbox is inside the coordinates of another hitbox, a collision is detected
-//
+//		Improve circle-to-box collider detection
+//			Create a function which more accurately detects the intersection between a circle and a rectangle
+//				Use the equation of a circle
 //	Score table
 //display current score
 //	itoa functions are being difficult
@@ -47,11 +47,17 @@
 //Try importing images
 //Try using fill functions instead of line-drawing ones
 //Make game pretty
+//
+
 
 //DONE
 //Fix disappearing tail segments
 //Make segments follow the head's path
 	//Calculate row and col from x and y coords
+//Implement hitboxes
+//Implement a full gameplay loop
+//Record and store scores
+//Implment ADTs for snake, snake segments, fruit
 
 
 #include "graphics.h"
@@ -89,7 +95,10 @@ void drawFruit(Fruit*);
 void populateIntArray(int* arr, int cols, int rows, int val);
 void printArray(int* arr, int cols, int rows);
 void setArrVal(int* ptr_arr, int val, int row, int col, int array_rows, int array_cols);
+void endIfSnakeCrashes(Snake*, bool*);
+void teleportCrashingSnake(Snake*);
 int getArrVal(int* ptr_arr, int row, int col, int array_rows, int array_cols);
+bool fruitIsInBody(Snake*, Fruit*);
 bool askToPlayAgain();
 
 void main()
@@ -149,9 +158,8 @@ void main()
 	do {
 		printf("Playing game\n");
 		playerSnake = createSnake(145, 145, 10);
+		score = 0;
 
-		int xo = 200;
-		int yo = 300;
 		fruit = createFruit(10, 200, 300);
 
 		int i = 0;
@@ -202,83 +210,25 @@ void main()
 
 
 			// End the game if the snake touches a wall
-			// TODO - make more accurate
+			endIfSnakeCrashes(&playerSnake, &gameContinue, boundary_n, boundary_e, boundary_s, boundary_w);
+			//teleportCrashingSnake(&playerSnake, boundary_n, boundary_e, boundary_s, boundary_w);
 
-			//debug
-			/*printf("North wall collider - x: %d\tY: %d\n", boundary_n.x1, boundary_n.y1);
-			printf("East wall collider - x: %d\tY: %d\n", boundary_e.x1, boundary_e.y1);
-			printf("South wall collider - x: %d\tY: %d\n", boundary_s.x1, boundary_s.y1);
-			printf("West wall collider - x: %d\tY: %d\n", boundary_w.x1, boundary_w.y1);*/
-
-			for (int segment = 0; segment <= playerSnake.size; segment++)
+			if (collided_cc(playerSnake.segments[0].body.collider_c, fruit.body.collider_c))
 			{
-				//if snake segment collides with boundary
-				//north
-				if (collided_cb(playerSnake.segments[segment].body.collider_c, boundary_n))
-					playerSnake.segments[segment].body.y = boundary_s.y2 - (playerSnake.radius + 1);
-				//east
-				else if (collided_cb(playerSnake.segments[segment].body.collider_c, boundary_e))
-					playerSnake.segments[segment].body.x = boundary_w.x2 + (playerSnake.radius + 1);
-				//south
-				else if (collided_cb(playerSnake.segments[segment].body.collider_c, boundary_s))
-					playerSnake.segments[segment].body.y = boundary_n.y1 + (playerSnake.radius + 1);
-				//west
-				else if (collided_cb(playerSnake.segments[segment].body.collider_c, boundary_w))
-					playerSnake.segments[segment].body.x = boundary_e.x1 - (playerSnake.radius + 1);
-			}
-
-			/*for (int segment = 0; segment <= playerSnake.size; segment++)
-			{
-				if (playerSnake.segments[segment].body.x > arenaX2)
-					playerSnake.segments[segment].body.x = arenaX1;
-				else if (playerSnake.segments[segment].body.x < arenaX1)
-					playerSnake.segments[segment].body.x = arenaX2;
-
-				if (playerSnake.segments[segment].body.y < arenaY2)
-					playerSnake.segments[segment].body.y = arenaY1;
-				else if (playerSnake.segments[segment].body.y > arenaY1)
-					playerSnake.segments[segment].body.y = arenaY2;
-			}*/
-
-			/*distanceToGoodie = sqrt(\
-				(playerSnake.segments[0].body.x - xo) * (playerSnake.segments[0].body.x - xo) \
-				+ (playerSnake.segments[0].body.y - yo) * (playerSnake.segments[0].body.y - yo));*/
-
-			if (collided_cc(playerSnake.segments[0].body.collider_c, fruit.body.collider_c)) {
-				printf("COLLISION!!!\n");
-				setFruitPos(&fruit, 
-					arenaX1 + (rand() % (arenaX2 - arenaOffset - fruit.radius)),
-					arenaY2 + (rand() % (arenaY1 - arenaOffset - fruit.radius)) );
-				score++;
-				addNewSegment(&playerSnake);
-				printf("Head collider radius: %d\n", playerSnake.segments[0].body.collider_c.radius);
-			}
-
-			/*if (distanceToGoodie < 20) {
-				printf("COLLISION!!!\n");
-				xo = arenaX1 + (rand() % (arenaX2 - arenaOffset));
-				yo = arenaY2 + (rand() % (arenaY1 - arenaOffset));
-				score++;
-				addNewSegment(&playerSnake);
-			}*/
-
-			for (int i = 0; i < playerSnake.size - 1; i++)
-			{
-				int snakeIndex = i + 1;
-				playerSnake.segments[snakeIndex].distanceToHead = sqrt(
-					(playerSnake.segments[snakeIndex].body.x - playerSnake.segments[0].body.x)
-					* (playerSnake.segments[snakeIndex].body.x - playerSnake.segments[0].body.x)
-					+ (playerSnake.segments[snakeIndex].body.y - playerSnake.segments[0].body.y)
-					* (playerSnake.segments[snakeIndex].body.y - playerSnake.segments[0].body.y));
-				int distanceToHead = playerSnake.segments[snakeIndex].distanceToHead;
-
-				//debug
-				//printf("Tail %d distance to head: %d\n", i, distanceToHead);
-
-				if (distanceToHead < 15)
+				do
 				{
+					setFruitPos(&fruit,
+						arenaX1 + (rand() % (arenaX2 - arenaOffset - fruit.radius)),
+						arenaY2 + (rand() % (arenaY1 - arenaOffset - fruit.radius)));
+				} while (fruitIsInBody(&playerSnake, &fruit));
+				score++;
+				addNewSegment(&playerSnake);
+			}
+
+			for (int segment = 1; segment < playerSnake.size; segment++)
+			{
+				if (collided_cc(playerSnake.segments[0].body.collider_c, playerSnake.segments[segment].body.collider_c))
 					gameContinue = false;
-				}
 			}
 
 			delay(100); // wait 50 ms , try different values for this delay
@@ -361,9 +311,6 @@ void main()
 				if (segmentNum == playerSnake.size - 1)
 				{
 					setArrVal(&pathMap, PATH_EMPTY, yPos, xPos, ROWS, COLS); // clear direction change marker from the map
-
-					//debug
-					//printf("Deleting segment number %d at (%d, %d)\n", segmentNum, xPos, yPos);
 				}
 			}
 
@@ -405,6 +352,61 @@ bool askToPlayAgain()
 
 
 	return playAgain;
+}
+
+void teleportCrashingSnake(Snake* ptr_snake, 
+	BoxCollider boundary_n, 
+	BoxCollider boundary_e, 
+	BoxCollider boundary_s, 
+	BoxCollider boundary_w)
+{
+	for (int segment = 0; segment <= ptr_snake->size; segment++)
+	{
+		//if snake segment collides with boundary
+		//north
+		if (collided_cb(ptr_snake->segments[segment].body.collider_c, boundary_n))
+			ptr_snake->segments[segment].body.y = boundary_s.y2 - (ptr_snake->radius + 1);
+		//east
+		else if (collided_cb(ptr_snake->segments[segment].body.collider_c, boundary_e))
+			ptr_snake->segments[segment].body.x = boundary_w.x2 + (ptr_snake->radius + 1);
+		//south
+		else if (collided_cb(ptr_snake->segments[segment].body.collider_c, boundary_s))
+			ptr_snake->segments[segment].body.y = boundary_n.y1 + (ptr_snake->radius + 1);
+		//west
+		else if (collided_cb(ptr_snake->segments[segment].body.collider_c, boundary_w))
+			ptr_snake->segments[segment].body.x = boundary_e.x1 - (ptr_snake->radius + 1);
+	}
+}
+
+// TODO - make more accurate
+void endIfSnakeCrashes(Snake* ptr_snake, bool* ptr_gameContinue,
+	BoxCollider boundary_n,
+	BoxCollider boundary_e,
+	BoxCollider boundary_s,
+	BoxCollider boundary_w)
+{
+	//if snake segment collides with boundary
+		//north
+	if (collided_cb(ptr_snake->segments[0].body.collider_c, boundary_n))
+		*ptr_gameContinue = false;
+	//east
+	else if (collided_cb(ptr_snake->segments[0].body.collider_c, boundary_e))
+		*ptr_gameContinue = false;
+	//south
+	else if (collided_cb(ptr_snake->segments[0].body.collider_c, boundary_s))
+		*ptr_gameContinue = false;
+	//west
+	else if (collided_cb(ptr_snake->segments[0].body.collider_c, boundary_w))
+		*ptr_gameContinue = false;
+}
+
+bool fruitIsInBody(Snake* ptr_snake, Fruit* ptr_fruit)
+{
+	for (int segment = 0; segment < ptr_snake->size; segment++)
+	{
+		if (collided_cc(ptr_snake->segments[segment].body.collider_c, ptr_fruit->body.collider_c))
+			return true;
+	}
 }
 
 void drawSnakeSegment(SnakeSegment* ptr_segment)

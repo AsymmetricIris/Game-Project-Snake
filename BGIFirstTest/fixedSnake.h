@@ -8,8 +8,7 @@
 
 typedef struct SnakeSegment
 {
-	int xVelocity, yVelocity, distanceToHead;
-	bool exists;
+	int xVelocity, yVelocity;
 	RigidBody body;
 }SnakeSegment;
 
@@ -34,7 +33,7 @@ SnakeSegment createSnakeSegment(int xPos, int yPos, int xVelocity, int yVelocity
 {
 	SnakeSegment snakeSegment;
 	init_SnakeSegment(&snakeSegment, xPos, yPos, xVelocity, yVelocity, colliderRadius);
-	snakeSegment.exists = true;
+	//snakeSegment.exists = true;
 
 	return snakeSegment;
 }
@@ -49,7 +48,7 @@ Snake createSnake(int xPos, int yPos, int snakeSpeed)
 {
 	Snake snake;
 	snake.speed = snakeSpeed;
-	snake.radius = 20;
+	snake.radius = 10	;
 	init_segments(&snake, xPos, yPos, 0, snake.speed, snake.radius);
 
 	return snake;
