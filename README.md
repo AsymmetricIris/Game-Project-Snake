@@ -1,5 +1,5 @@
 # Game-Project-Snake
-A University project for our first class in C programming.
+A University project for our first class in C programming.\n
 Chose to program the game Snake using raw C's features to impllement OOP behaviours 
 (because I tried not OOP and it suited game programming very poorly)
 
