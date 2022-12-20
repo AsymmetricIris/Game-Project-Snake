@@ -6,6 +6,10 @@ Chose to program the game Snake using raw C's features to impllement OOP behavio
 Implemented features such as...
 - collision with hitboxes
 - using collision to collect a treat and add to both the score and snake's length
-- track the score through a txt file
+- track score history through a .dat file and detect a new high score
 - class behaviour via structs
 - the snake was able to "teleport" to the opposite side of the world like Pacman when it bumped into a wall. Now, the game ends
+
+TODO
+- acknowledge how badly I documented my work in 1st year
+- fix how badly I documented this project
